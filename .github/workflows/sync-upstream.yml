@@ -1,0 +1,34 @@
+name: Sync with Upstream
+
+on:
+  schedule:
+    # 每天 UTC 时间 0:00 运行
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync upstream
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/KJGX66F/usque-custom-pro.git
+          git fetch upstream main
+          git merge upstream/main --no-edit
+          git push origin main
+
+      - name: Create Pull Request if there are changes
+        if: failure()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: sync with upstream'
+          title: 'Sync with upstream'
+          body: 'Auto-sync with upstream branch'
+          branch: sync-upstream
